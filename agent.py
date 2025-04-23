@@ -20,6 +20,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    st.error(
+        "OPENAI_API_KEY is not set. Please add it to your .env file or Streamlit Cloud secrets. "
+        "For Streamlit Cloud, go to 'Manage app' > 'Secrets' and add: OPENAI_API_KEY='your-key'"
+    )
+    st.stop()
 
 def load_csv_documents(csv_paths: List[str]) -> List[Document]:
     documents = []
@@ -43,12 +49,12 @@ def split_documents(documents: List[Document]) -> List[Document]:
     return text_splitter.split_documents(documents)
 
 def create_vector_store(documents: List[Document]) -> Chroma:
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=openai_api_key)
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
     vector_store = Chroma.from_documents(documents, embeddings, persist_directory="./chroma_db")
     return vector_store
 
 def load_existing_vector_store() -> Chroma:
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=openai_api_key)
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
     return Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
 
 def table_query_tool(query: str) -> str:
@@ -56,7 +62,7 @@ def table_query_tool(query: str) -> str:
         template="Analyze tabular CSV data to answer: {query}\n\nIf the query involves ARPU (Average Revenue Per User), assume historical data is retrieved separately and provide a forecast based on trends (e.g., average of past values). If data is insufficient, state so and suggest what’s needed (e.g., revenue and user counts). Provide a concise answer.",
         input_variables=["query"]
     )
-    llm = ChatOpenAI(model_name="gpt-4o-mini", openai_api_key=openai_api_key, temperature=0)
+    llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=openai_api_key, temperature=0)
     chain = prompt | llm | StrOutputParser()
     try:
         return chain.invoke({"query": query})
@@ -79,7 +85,7 @@ def create_retriever_tool_instance(vector_store: Chroma) -> Tool:
     )
 
 def create_agent(vector_store: Chroma) -> AgentExecutor:
-    llm = ChatOpenAI(model_name="gpt-4o-mini", temperature=0)
+    llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=openai_api_key, temperature=0)
     tools = [create_retriever_tool_instance(vector_store), create_table_query_tool()]
     
     prompt = PromptTemplate(
