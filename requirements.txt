@@ -7,4 +7,3 @@ openai==1.14.2
 chromadb==0.4.24
 unstructured==0.10.12
 pandas
-tiktoken
