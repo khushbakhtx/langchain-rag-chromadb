@@ -51,18 +51,17 @@ def load_existing_vector_store() -> Chroma:
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
     return Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
 
-def table_query_tool(query: str, context: str = "") -> str:
+def table_query_tool(query: str) -> str:
     prompt = PromptTemplate(
-        template="""
-        Твоя задача проанализировать вопрос и дать соответствующий ответ под запрос: 
-        {query}\n\n
-        Context (retrieved data): {context}\n\n
-        If the context contains relevant data (e.g., revenue and user counts), calculate ARPU (revenue / users) or forecast it based on historical trends (e.g., average of past values). If insufficient data is provided, state the limitation and make a reasonable assumption or request clarification. Provide a concise answer.""",
-        input_variables=["query", "context"]
+        template="Analyze tabular CSV data to answer: {query}\n\nIf the query involves ARPU (Average Revenue Per User), assume historical data is retrieved separately and provide a forecast based on trends (e.g., average of past values). If data is insufficient, state so and suggest what’s needed (e.g., revenue and user counts). Provide a concise answer.",
+        input_variables=["query"]
     )
     llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=openai_api_key, temperature=0)
     chain = prompt | llm | StrOutputParser()
-    return chain.invoke({"query": query, "context": context})
+    try:
+        return chain.invoke({"query": query})
+    except Exception as e:
+        return f"Error processing query: {e}"
 
 def create_table_query_tool() -> Tool:
     return Tool(
