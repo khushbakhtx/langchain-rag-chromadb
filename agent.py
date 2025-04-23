@@ -50,12 +50,12 @@ def split_documents(documents: List[Document]) -> List[Document]:
 
 def create_vector_store(documents: List[Document]) -> Chroma:
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
-    vector_store = Chroma.from_documents(documents, embeddings, persist_directory="./chroma_db")
+    vector_store = Chroma.from_documents(documents, embeddings, persist_directory="/tmp/chroma_db")
     return vector_store
 
 def load_existing_vector_store() -> Chroma:
     embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
-    return Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+    return Chroma(persist_directory="/tmp/chroma_db", embedding_function=embeddings)
 
 def table_query_tool(query: str) -> str:
     prompt = PromptTemplate(
