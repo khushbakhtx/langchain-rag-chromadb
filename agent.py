@@ -43,12 +43,12 @@ def split_documents(documents: List[Document]) -> List[Document]:
     return text_splitter.split_documents(documents)
 
 def create_vector_store(documents: List[Document]) -> Chroma:
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=openai_api_key)
     vector_store = Chroma.from_documents(documents, embeddings, persist_directory="./chroma_db")
     return vector_store
 
 def load_existing_vector_store() -> Chroma:
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", openai_api_key=openai_api_key)
     return Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
 
 def table_query_tool(query: str) -> str:
@@ -56,7 +56,7 @@ def table_query_tool(query: str) -> str:
         template="Analyze tabular CSV data to answer: {query}\n\nIf the query involves ARPU (Average Revenue Per User), assume historical data is retrieved separately and provide a forecast based on trends (e.g., average of past values). If data is insufficient, state so and suggest what’s needed (e.g., revenue and user counts). Provide a concise answer.",
         input_variables=["query"]
     )
-    llm = ChatOpenAI(model_name="gpt-4o-mini", api_key=openai_api_key, temperature=0)
+    llm = ChatOpenAI(model_name="gpt-4o-mini", openai_api_key=openai_api_key, temperature=0)
     chain = prompt | llm | StrOutputParser()
     try:
         return chain.invoke({"query": query})
